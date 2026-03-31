@@ -47,12 +47,26 @@ export default function Admin() {
   const { data: allComplaints } = useQuery({
     queryKey: ["admin-complaints"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: complaintsData, error } = await supabase
         .from("complaints")
-        .select("*, profiles:created_by(full_name)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+
+      // Fetch profile names for complaint creators
+      const userIds = [...new Set((complaintsData || []).map((c) => c.created_by))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", userIds);
+
+      const nameMap: Record<string, string> = {};
+      (profiles || []).forEach((p) => { nameMap[p.user_id] = p.full_name; });
+
+      return (complaintsData || []).map((c) => ({
+        ...c,
+        creator_name: nameMap[c.created_by] || "Unknown",
+      }));
     },
   });
 
@@ -197,7 +211,7 @@ export default function Admin() {
                   <div>
                     <CardTitle className="text-base">{c.title}</CardTitle>
                     <CardDescription>
-                      By {(c.profiles as any)?.full_name || "Unknown"} · {format(new Date(c.created_at), "MMM d, yyyy")} · {c.category}
+                      By {c.creator_name} · {format(new Date(c.created_at), "MMM d, yyyy")} · {c.category}
                     </CardDescription>
                   </div>
                   <Select
@@ -215,8 +229,11 @@ export default function Admin() {
                   </Select>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground">{c.description}</p>
+                {c.image_url && (
+                  <img src={c.image_url} alt="Complaint photo" className="w-full max-w-sm rounded-lg border border-border" />
+                )}
               </CardContent>
             </Card>
           ))}
