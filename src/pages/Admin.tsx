@@ -229,8 +229,11 @@ export default function Admin() {
                   </Select>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground">{c.description}</p>
+                {c.image_url && (
+                  <img src={c.image_url} alt="Complaint photo" className="w-full max-w-sm rounded-lg border border-border" />
+                )}
               </CardContent>
             </Card>
           ))}
