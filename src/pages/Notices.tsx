@@ -49,8 +49,15 @@ export default function Notices() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{notice.description}</p>
+                {notice.image_url && (
+                  <img
+                    src={notice.image_url}
+                    alt={notice.title}
+                    className="rounded-lg border max-h-64 object-cover w-full"
+                  />
+                )}
               </CardContent>
             </Card>
           ))}
