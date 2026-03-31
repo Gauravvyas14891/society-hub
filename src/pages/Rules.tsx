@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Phone, FileText } from "lucide-react";
 
 const importantContacts = [
   { name: "Secretary", phone: "+91 98765 43210" },
   { name: "Security Guard", phone: "+91 98765 43211" },
-  { name: "Plumber", phone: "+91 98765 43212" },
-  { name: "Electrician", phone: "+91 98765 43213" },
 ];
 
 export default function Rules() {
@@ -24,8 +23,8 @@ export default function Rules() {
   });
 
   return (
-    <div className="space-y-6 max-w-3xl">
-      <div>
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="text-center">
         <h1 className="text-2xl font-bold">Society Rules</h1>
         <p className="text-muted-foreground">Guidelines for all residents of Vijay Garden</p>
       </div>
@@ -41,7 +40,7 @@ export default function Rules() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {rules.map((rule, idx) => (
+          {rules.map((rule: any, idx: number) => (
             <Card key={rule.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -51,8 +50,15 @@ export default function Rules() {
                   {rule.title}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{rule.content}</p>
+                {rule.rulebook_url && (
+                  <a href={rule.rulebook_url} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" size="sm">
+                      <FileText className="h-4 w-4 mr-2" />View Rulebook PDF
+                    </Button>
+                  </a>
+                )}
               </CardContent>
             </Card>
           ))}
