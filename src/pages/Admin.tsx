@@ -211,7 +211,7 @@ export default function Admin() {
                   <div>
                     <CardTitle className="text-base">{c.title}</CardTitle>
                     <CardDescription>
-                      By {(c.profiles as any)?.full_name || "Unknown"} · {format(new Date(c.created_at), "MMM d, yyyy")} · {c.category}
+                      By {c.creator_name} · {format(new Date(c.created_at), "MMM d, yyyy")} · {c.category}
                     </CardDescription>
                   </div>
                   <Select
