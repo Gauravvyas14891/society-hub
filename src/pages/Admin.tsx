@@ -47,12 +47,26 @@ export default function Admin() {
   const { data: allComplaints } = useQuery({
     queryKey: ["admin-complaints"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: complaintsData, error } = await supabase
         .from("complaints")
-        .select("*, profiles:created_by(full_name)")
+        .select("*")
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data;
+
+      // Fetch profile names for complaint creators
+      const userIds = [...new Set((complaintsData || []).map((c) => c.created_by))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", userIds);
+
+      const nameMap: Record<string, string> = {};
+      (profiles || []).forEach((p) => { nameMap[p.user_id] = p.full_name; });
+
+      return (complaintsData || []).map((c) => ({
+        ...c,
+        creator_name: nameMap[c.created_by] || "Unknown",
+      }));
     },
   });
 

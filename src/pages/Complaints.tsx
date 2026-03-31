@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, MessageSquareWarning, Loader2 } from "lucide-react";
+import { Plus, MessageSquareWarning, Loader2, ImagePlus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -30,6 +30,9 @@ export default function Complaints() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: complaints, isLoading } = useQuery({
     queryKey: ["my-complaints"],
@@ -43,14 +46,47 @@ export default function Complaints() {
     },
   });
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 5MB allowed", variant: "destructive" });
+      return;
+    }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
+      let imageUrl: string | null = null;
+
+      if (photoFile && user) {
+        const ext = photoFile.name.split(".").pop();
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("complaint-photos")
+          .upload(path, photoFile);
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage
+          .from("complaint-photos")
+          .getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.from("complaints").insert({
         title,
         description,
         category,
         created_by: user!.id,
-      });
+        image_url: imageUrl,
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -60,6 +96,7 @@ export default function Complaints() {
       setTitle("");
       setDescription("");
       setCategory("");
+      clearPhoto();
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -87,7 +124,7 @@ export default function Complaints() {
             >
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Brief summary" />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} required placeholder="Brief summary" maxLength={200} />
               </div>
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -102,7 +139,24 @@ export default function Complaints() {
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Describe the issue in detail" rows={4} />
+                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} required placeholder="Describe the issue in detail" rows={4} maxLength={2000} />
+              </div>
+              <div className="space-y-2">
+                <Label>Photo (optional)</Label>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                {photoPreview ? (
+                  <div className="relative w-full">
+                    <img src={photoPreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border border-border" />
+                    <Button type="button" variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={clearPhoto}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button type="button" variant="outline" className="w-full" onClick={() => fileRef.current?.click()}>
+                    <ImagePlus className="h-4 w-4 mr-2" />
+                    Attach Photo
+                  </Button>
+                )}
               </div>
               <Button type="submit" className="w-full" disabled={createMutation.isPending || !category}>
                 {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -124,7 +178,7 @@ export default function Complaints() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {complaints.map((c) => (
+          {complaints.map((c: any) => (
             <Card key={c.id}>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-2 flex-wrap">
@@ -139,8 +193,11 @@ export default function Complaints() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{c.description}</p>
+                {c.image_url && (
+                  <img src={c.image_url} alt="Complaint photo" className="w-full max-w-sm rounded-lg border border-border" />
+                )}
               </CardContent>
             </Card>
           ))}
