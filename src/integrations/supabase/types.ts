@@ -59,6 +59,7 @@ export type Database = {
           created_by: string
           description: string
           id: string
+          image_url: string | null
           notice_date: string
           society_id: string
           title: string
@@ -69,6 +70,7 @@ export type Database = {
           created_by: string
           description: string
           id?: string
+          image_url?: string | null
           notice_date?: string
           society_id?: string
           title: string
@@ -79,6 +81,7 @@ export type Database = {
           created_by?: string
           description?: string
           id?: string
+          image_url?: string | null
           notice_date?: string
           society_id?: string
           title?: string
@@ -123,6 +126,7 @@ export type Database = {
           created_by: string
           display_order: number
           id: string
+          rulebook_url: string | null
           society_id: string
           title: string
           updated_at: string
@@ -133,6 +137,7 @@ export type Database = {
           created_by: string
           display_order?: number
           id?: string
+          rulebook_url?: string | null
           society_id?: string
           title: string
           updated_at?: string
@@ -143,6 +148,7 @@ export type Database = {
           created_by?: string
           display_order?: number
           id?: string
+          rulebook_url?: string | null
           society_id?: string
           title?: string
           updated_at?: string
