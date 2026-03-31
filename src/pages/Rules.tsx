@@ -53,11 +53,18 @@ export default function Rules() {
               <CardContent className="space-y-2">
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{rule.content}</p>
                 {rule.rulebook_url && (
-                  <a href={rule.rulebook_url} target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" size="sm">
-                      <FileText className="h-4 w-4 mr-2" />View Rulebook PDF
-                    </Button>
-                  </a>
+                  <div className="flex flex-col gap-2">
+                    <a href={rule.rulebook_url} target="_blank" rel="noopener noreferrer">
+                      <Button variant="outline" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />View Rulebook PDF
+                      </Button>
+                    </a>
+                    <iframe
+                      src={rule.rulebook_url}
+                      className="w-full h-[500px] rounded-lg border"
+                      title={`${rule.title} - Rulebook`}
+                    />
+                  </div>
                 )}
               </CardContent>
             </Card>
